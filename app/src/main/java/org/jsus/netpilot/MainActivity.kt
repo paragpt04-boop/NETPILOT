@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.saveable.rememberSaveable
 
 internal val ink = Color(0xFF101412)
 internal val green = Color(0xFF8AE9A0)
@@ -54,7 +55,7 @@ class MainActivity : ComponentActivity() {
 }
 @Composable fun Netpilot(opening: Int = 0) {
     var splash by remember(opening) { mutableStateOf(true) }
-    var page by remember { mutableIntStateOf(0) }
+    var page by rememberSaveable { mutableIntStateOf(0) }
     LaunchedEffect(opening) { delay(1100); splash = false }
     val context = LocalContext.current.applicationContext
     val store = remember { LocalStore(context) }
@@ -77,7 +78,8 @@ class MainActivity : ComponentActivity() {
         Label("  DATOS DE EJEMPLO / SIN CONEXIÓN", muted, 11)
         if (notice.isNotEmpty()) { Label(notice, orange); Action("OCULTAR AVISO") { notice = "" } }
         Rule()
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        val pageScroll = key(page) { rememberScrollState() }
+        Column(Modifier.weight(1f).verticalScroll(pageScroll).padding(16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             when (page) {
                 0 -> Dashboard()
                 else -> Operations(page, ledger, busy, perform)

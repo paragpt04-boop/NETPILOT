@@ -38,6 +38,7 @@ import java.time.LocalDate
     var id by remember { mutableStateOf<String?>(null) }
     var name by remember { mutableStateOf("") }; var ip by remember { mutableStateOf("") }; var plan by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf<Customer?>(null) }
+    LaunchedEffect(data) { editing=false; confirm=null }
     Label("CLIENTES",size=26)
     Field("Buscar cliente",query) { query=it }
     Action("NUEVO CLIENTE") { id=null;name="";ip="";plan=data.plans.firstOrNull()?.id.orEmpty();editing=true }
@@ -71,6 +72,7 @@ import java.time.LocalDate
 @Composable private fun PlanScreen(data: Ledger,busy:Boolean,perform:((LocalStore)->Unit)->Unit) {
     var editing by remember { mutableStateOf(false) };var id by remember { mutableStateOf<String?>(null) }
     var name by remember { mutableStateOf("") };var speed by remember { mutableStateOf("") };var price by remember { mutableStateOf("") };var profile by remember { mutableStateOf("") }
+    LaunchedEffect(data) { editing=false }
     Label("PLANES",size=26)
     Label("Moneda de trabajo: CUP · perfiles sin sincronizar",muted)
     Action("NUEVO PLAN") { id=null;name="";speed="";price="";profile="";editing=true }
@@ -90,6 +92,7 @@ import java.time.LocalDate
     var confirmPay by remember { mutableStateOf(false) };var reversal by remember { mutableStateOf<Payment?>(null) }
     var customer by remember { mutableStateOf<String?>(null) };var due by remember { mutableStateOf(LocalDate.now().plusDays(30).toString()) };var charge by remember { mutableStateOf("") }
     var newBill by remember { mutableStateOf(false) }
+    LaunchedEffect(data) { selected=null;newBill=false;confirmPay=false }
     Label("PAGOS",size=26)
     Label("PENDIENTE / ${money(data.bills.sumOf { data.balance(it) })}",orange,18)
     Label("Cobros manuales · entorno con datos de ejemplo",muted)
