@@ -1,23 +1,23 @@
 # NETPILOT · JsusOrg
 
-Aplicación Android nativa para pequeños ISP/WISP. Panel principal con datos ficticios; la pestaña Tools incorpora una lectura real y segura de MikroTik en la LAN.
+Aplicación Android nativa local-first para operadores ISP/WISP. No utiliza VPS en esta fase.
 
-## Compilar
+## Operación
+- Splash JsusOrg al abrir y al regresar al primer plano.
+- Cinco pestañas: Dashboard, Clientes, Planes, Pagos y Herramientas.
+- Dashboard con CPU, RAM, sesiones, interfaces y muestras reales de tráfico; no utiliza datos ficticios.
+- RouterOS API-SSL con TLS, 8729 predeterminado, puerto configurable, certificado de CA confiable o pin SHA-256 verificado.
+- Sesión volátil AES-GCM cifrada en memoria y destruida al abandonar la app. La memoria de un proceso comprometido sigue siendo vulnerable; los Strings transitorios no pueden borrarse de forma garantizada en JVM.
+- SQLite local para clientes, planes, cargos, pagos parciales y anulaciones. Base de datos vacía al instalar.
+- Herramientas de solo lectura: vecinos LAN, logs, rutas, interfaces y otras secciones RouterOS.
+- Suspensión y reactivación modifican únicamente el estado administrativo local, sin comandos al MikroTik.
 
-Requiere JDK 17, Android SDK 35 y Build Tools 35.0.0. Configure `ANDROID_HOME` o `sdk.dir` en `local.properties` (archivo excluido de Git).
+## Compilación
+JDK 17, SDK Android 35, Gradle 8.11.1. Ejecutar: ./gradlew assembleDebug lintDebug assembleDebugAndroidTest
+GitHub Actions ejecuta también pruebas instrumentadas con emulador.
 
-Windows: `gradlew.bat assembleDebug lintDebug`
+## Instalación y migración
+El dispositivo Android debe alcanzar la LAN de administración del MikroTik por Wi-Fi. La API-SSL debe estar configurada con certificado y usuario restringido de lectura. NETPILOT no cambia router, firewall ni servicios por su cuenta.
+Se utiliza netpilot-production.db, separada de la antigua netpilot-examples.db. La demostración antigua no se importa automáticamente para evitar mezclar datos ficticios.
 
-Linux/macOS: `./gradlew assembleDebug lintDebug`
-
-El wrapper descarga Gradle 8.11.1 y verifica su SHA-256. Primera compilación requiere Internet para dependencias. APK: `app/build/outputs/apk/debug/app-debug.apk`.
-
-## Verificación
-
-GitHub Actions compila, ejecuta Android Lint y pruebas instrumentadas en Android 15 (API 35). Comprueban navegación, acciones de demostración y reentrada con JsusOrg. El artefacto `netpilot-demo-and-reports` incluye APK debug e informes. Localmente, con emulador activo: `./gradlew connectedDebugAndroidTest`.
-
-## Alcance
-
-Splash nativo con monograma J/O seguido de marca JsusOrg en Compose; reaparece al volver a primer plano. Dashboard con métricas de ejemplo. Clientes y planes editables, cargos, cobros parciales, anulación, recibos compartibles y exportación JSON. SQLite conserva datos comerciales; los ejemplos se cargan una sola vez. Moneda CUP. Suspender/reactivar cambia únicamente el estado simulado. Con permiso INTERNET exclusivamente para consultas API-SSL 8729. Contraseña solo en memoria transitoria, nunca en SQLite ni preferencias. No hay comandos de escritura; el panel inicial sigue con datos de demostración. Firma debug de instalación para verificación; una distribución de producción necesita firma de lanzamiento propia.
-
-Diseño de conectividad y evolución: [ARCHITECTURE.md](ARCHITECTURE.md).
+Ver ARCHITECTURE.md.

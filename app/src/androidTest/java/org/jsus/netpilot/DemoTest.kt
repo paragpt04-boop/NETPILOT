@@ -14,7 +14,7 @@ class NavigationTest {
         }
         ui.onNodeWithText("Conecta tu primer MikroTik").assertExists()
         ui.onNodeWithText("Clientes").performClick()
-        ui.onNodeWithText("Aún no hay clientes",substring=true).assertExists()
+        ui.onNodeWithText("Primero crea un plan").assertExists()
         ui.onNodeWithText("Planes").performClick()
         ui.onNodeWithText("Sin planes configurados").assertExists()
         ui.onNodeWithText("Pagos").performClick()
