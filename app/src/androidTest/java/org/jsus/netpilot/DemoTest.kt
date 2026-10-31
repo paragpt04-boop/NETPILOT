@@ -10,17 +10,17 @@ class DemoTest {
 
     @Test fun navigationAndSafeActions() {
         ui.waitUntil(10000) { ui.onAllNodesWithText("CENTRO DE OPERACIONES").fetchSemanticsNodes().isNotEmpty() }
-        ui.onNodeWithText("DEMO / SIN CONEXIÓN / SOLO LECTURA", substring = true).assertExists()
+        ui.onNodeWithText("DATOS DE EJEMPLO / SIN CONEXIÓN", substring = true).assertExists()
         ui.onNodeWithText("Clientes").performClick()
         ui.onNodeWithText("Ana Pérez").assertExists()
-        ui.onAllNodesWithText("SUSPENDER…")[0].performClick()
-        ui.onNodeWithText("ENTENDIDO").performScrollTo().performClick()
+        ui.onAllNodesWithText("SUSPENDER…")[0].performScrollTo().performClick()
+        ui.onNodeWithText("CANCELAR").performScrollTo().performClick()
         ui.onNodeWithText("Planes").performClick()
-        ui.onNodeWithText("MÓDULO PREVISTO / AÚN SIN IMPLEMENTAR").assertExists()
+        ui.onNodeWithText("NUEVO PLAN").assertExists()
         ui.onNodeWithText("Pagos").performClick()
-        ui.onNodeWithText("Efectivo · Transferencia · Recibos").assertExists()
+        ui.onNodeWithText("GENERAR CARGO").assertExists()
         ui.onNodeWithText("Tools").performClick()
-        ui.onNodeWithText("LAN · Logs · Respaldo").assertExists()
+        ui.onNodeWithText("EXPORTAR DATOS LOCALES").assertExists()
         ui.onNodeWithText("Panel").performClick()
         ui.onNodeWithText("CENTRO DE OPERACIONES").assertExists()
     }

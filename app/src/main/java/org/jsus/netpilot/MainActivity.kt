@@ -16,11 +16,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import androidx.compose.ui.platform.LocalContext
 
-private val ink = Color(0xFF101412)
-private val green = Color(0xFF8AE9A0)
-private val orange = Color(0xFFFF983F)
-private val muted = Color(0xFF89958E)
+internal val ink = Color(0xFF101412)
+internal val green = Color(0xFF8AE9A0)
+internal val orange = Color(0xFFFF983F)
+internal val muted = Color(0xFF89958E)
 
 class MainActivity : ComponentActivity() {
     private val opening = mutableStateOf(0)
@@ -28,16 +32,16 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
-        setContent { key(opening.value) { Netpilot() } }
+        setContent { Netpilot(opening.value) }
     }
     override fun onStart() { super.onStart(); opening.value++ }
 }
 
-@Composable private fun Label(value: String, color: Color = green, size: Int = 13) {
+@Composable internal fun Label(value: String, color: Color = green, size: Int = 13) {
     BasicText(value, style = TextStyle(color = color, fontSize = size.sp, fontFamily = FontFamily.Monospace))
 }
-@Composable private fun Rule() { Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF303B34))) }
-@Composable private fun Action(title: String, block: () -> Unit) {
+@Composable internal fun Rule() { Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF303B34))) }
+@Composable internal fun Action(title: String, block: () -> Unit) {
     Box(Modifier.border(1.dp, muted).clickable(onClick = block).heightIn(min = 48.dp).padding(12.dp), contentAlignment = Alignment.Center) { Label(title, orange) }
 }
 @Composable fun JsusOrgSplash() {
@@ -48,21 +52,35 @@ class MainActivity : ComponentActivity() {
         Label("NETPILOT / LOCAL NETWORK OPERATIONS", muted, 11)
     }
 }
-@Composable fun Netpilot() {
-    var splash by remember { mutableStateOf(true) }
+@Composable fun Netpilot(opening: Int = 0) {
+    var splash by remember(opening) { mutableStateOf(true) }
     var page by remember { mutableIntStateOf(0) }
-    LaunchedEffect(Unit) { delay(1100); splash = false }
+    LaunchedEffect(opening) { delay(1100); splash = false }
+    val context = LocalContext.current.applicationContext
+    val store = remember { LocalStore(context) }
+    val scope = rememberCoroutineScope()
+    var ledger by remember { mutableStateOf(Ledger()) }
+    var busy by remember { mutableStateOf(false) }
+    var notice by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) { ledger = withContext(Dispatchers.IO) { store.read() } }
+    val perform: ((LocalStore)->Unit)->Unit = { action ->
+        if (!busy) { busy = true; scope.launch {
+            try { ledger = withContext(Dispatchers.IO) { action(store); store.read() }; notice = "Guardado localmente" }
+            catch (e: Exception) { notice = e.message ?: "No se pudo guardar" }
+            finally { busy = false }
+        } }
+    }
     if (splash) { JsusOrgSplash(); return }
     val tabs = listOf("Panel", "Clientes", "Planes", "Pagos", "Tools")
     Column(Modifier.fillMaxSize().background(ink).safeDrawingPadding()) {
         Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) { Label("NETPILOT", size = 22); Label("JsusOrg", orange) }
-        Label("  DEMO / SIN CONEXIÓN / SOLO LECTURA", muted, 11)
+        Label("  DATOS DE EJEMPLO / SIN CONEXIÓN", muted, 11)
+        if (notice.isNotEmpty()) { Label(notice, orange); Action("OCULTAR AVISO") { notice = "" } }
         Rule()
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             when (page) {
                 0 -> Dashboard()
-                1 -> Clients()
-                else -> { Label(tabs[page].uppercase(), size = 24); Label(when(page) { 2 -> "Catálogo de velocidades y perfiles RouterOS"; 3 -> "Efectivo · Transferencia · Recibos"; else -> "LAN · Logs · Respaldo" }, muted); Label("MÓDULO PREVISTO / AÚN SIN IMPLEMENTAR", orange) }
+                else -> Operations(page, ledger, busy, perform)
             }
         }
         Rule()
@@ -103,20 +121,4 @@ class MainActivity : ComponentActivity() {
     Rule()
     Label("SALUD / SIN EVALUACIÓN REAL", orange)
     Label("La integración mostrará interfaces, recursos y sesiones disponibles según permisos.", muted)
-}
-@Composable fun Clients() {
-    var selection by remember { mutableStateOf<String?>(null) }
-    Label("CLIENTES", size = 26)
-    Label("3 registros de ejemplo / sin base persistente", muted)
-    listOf(Triple("Ana Pérez", "10.10.0.12", "Activo"), Triple("Luis Díaz", "10.10.0.18", "Moroso"), Triple("Taller Norte", "10.10.0.25", "Activo")).forEach { (name, ip, state) ->
-        Rule()
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Label(name, size = 17); Label(state, if(state == "Moroso") orange else green) }
-        Label("$ip / PLAN 20 Mbps", muted)
-        Action(if(state == "Moroso") "REACTIVAR…" else "SUSPENDER…") { selection = name }
-    }
-    selection?.let { name ->
-        Rule(); Label("ACCIÓN SOBRE $name", orange)
-        Label("Requiere sesión autorizada, vínculo exacto al servicio y confirmación. Demo: no se envían comandos.", muted)
-        Action("ENTENDIDO") { selection = null }
-    }
 }
