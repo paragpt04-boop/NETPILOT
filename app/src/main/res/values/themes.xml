@@ -1,0 +1,15 @@
+<resources>
+    <style name="Theme.Netpilot" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowBackground">#0C1218</item>
+        <item name="android:statusBarColor">#0C1218</item>
+        <item name="android:navigationBarColor">#0C1218</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorAccent">#80D5AD</item>
+    </style>
+    <style name="Theme.Netpilot.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0C1218</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/jsusorg_mark</item>
+        <item name="postSplashScreenTheme">@style/Theme.Netpilot</item>
+    </style>
+</resources>
