@@ -5,7 +5,6 @@
         <item name="android:statusBarColor">#101412</item>
         <item name="android:navigationBarColor">#101412</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
         <item name="android:colorAccent">#FF983F</item>
     </style>
     <style name="Theme.Netpilot.Starting" parent="Theme.SplashScreen">

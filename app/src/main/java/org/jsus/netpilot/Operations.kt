@@ -154,8 +154,7 @@ import java.time.LocalDate
     Label("${data.customers.size} clientes / ${data.plans.size} planes / ${data.payments.size} cobros",muted)
     Action("EXPORTAR DATOS LOCALES") { export.launch("netpilot-${LocalDate.now()}.json") }
     if(status.isNotEmpty()) Label(status)
-    Rule();Label("MIKROTIK / SIN INTEGRAR",orange)
-    Label("Escaneo LAN, logs y respaldo del router requieren la integración real. No se solicitan credenciales en esta versión.",muted)
+    Rule(); RouterConnectionScreen()
     Rule();Label("DIAGNÓSTICO LOCAL")
-    Label("SQLite: disponible\nAcceso de red: deshabilitado\nSincronización VPS: deshabilitada\nMarca: JsusOrg",muted)
+    Label("SQLite: disponible\nAcceso de red: API-SSL bajo demanda\nSincronización VPS: deshabilitada\nMarca: JsusOrg",muted)
 }
