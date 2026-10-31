@@ -106,7 +106,7 @@ internal object RouterOsReader {
     }
 
     /** Synthetic protocol tests; never opens a socket. */
-    internal fun readTestReplies(raw:ByteArray):List<Map<String,String>>=
+    internal fun readTestReplies(raw:ByteArray):List<Map<String,String>> =
         receive(BufferedInputStream(ByteArrayInputStream(raw)),200)
 
     private fun send(out:BufferedOutputStream,words:List<String>){
