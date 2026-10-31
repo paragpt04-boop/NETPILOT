@@ -1,6 +1,6 @@
 # NETPILOT / JsusOrg
 
-Estado: base UI Compose con datos ficticios. No implementa conexión, almacenamiento, cobros ni comandos reales. Sin permiso de Internet deliberadamente hasta integrar. Splash Compose en cada entrada a primer plano; la pantalla inicial del sistema Android aún requiere recurso de marca específico. No se ha compilado ni probado en dispositivo.
+Estado: base UI Compose con datos ficticios. No implementa conexión, almacenamiento, cobros ni comandos reales. Sin permiso de Internet deliberadamente hasta integrar. Splash Compose en cada entrada a primer plano; la pantalla inicial del sistema utiliza un monograma J/O con SplashScreen compat. La verificación reproducible está en GitHub Actions; no se ha probado en un teléfono físico.
 
 ## Conectividad prevista
 Android → red Wi-Fi seleccionada → socket TLS API-SSL 8729 → RouterOS. No REST: el protocolo binario RouterOS requiere codificar longitudes, sentencias, tags, !re/!done/!trap y límites de respuesta. 8728 transmite sin TLS y estará deshabilitado. 8729 exige certificado con cadena y nombre/IP válidos, o confianza explícita en certificado verificado fuera de banda. Nunca aceptar cualquier certificado; no usar modo anónimo sin certificado. No habilitar servicios, editar firewall ni crear usuarios automáticamente. Un fallo devuelve diagnóstico y no modifica la red.
@@ -23,6 +23,6 @@ Pagos fase 1: efectivo/transferencia, referencia, fecha, importe, moneda, operad
 VPS futuro: autenticación por organización, sincronización opcional, conflictos explícitos e idempotencia. Nunca sincronizar credenciales RouterOS. Acceso remoto mediante túnel privado o agente local autorizado, sin publicar 8729 en Internet.
 
 ## Construcción pendiente
-Abrir en Android Studio con JDK 17, SDK 35 y Gradle 8.11.1. Dependencias fijadas como base, no afirmadas como últimas versiones. Falta wrapper Gradle y validación de build. No se ha publicado ni hecho push.
+Abrir en Android Studio con JDK 17, SDK 35 y Gradle 8.11.1. Dependencias fijadas como base, no afirmadas como últimas versiones. Wrapper Gradle incluido con checksum. GitHub Actions compila, analiza y prueba en emulador; consultar el resultado de la ejecución del commit.
 
 Fuentes: https://help.mikrotik.com/docs/spaces/ROS/pages/47579160/API ; https://developer.android.com/develop/ui/compose/setup
