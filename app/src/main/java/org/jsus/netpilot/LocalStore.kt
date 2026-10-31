@@ -25,7 +25,7 @@ fun parseMoney(text: String): Long {
 fun money(cents: Long) = BigDecimal.valueOf(cents, 2).toPlainString() + " CUP"
 
 /** Business records only. Router credentials must never enter this database. */
-class LocalStore(context: Context, name: String = "netpilot-examples.db") : SQLiteOpenHelper(context, name, null, 1) {
+class LocalStore(context: Context, name: String = "netpilot-production.db") : SQLiteOpenHelper(context, name, null, 1) {
     override fun onConfigure(db: SQLiteDatabase) { db.setForeignKeyConstraintsEnabled(true) }
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE plans(id TEXT PRIMARY KEY,name TEXT NOT NULL,speed TEXT NOT NULL,cents INTEGER NOT NULL CHECK(cents>0),profile TEXT NOT NULL)")
@@ -33,11 +33,7 @@ class LocalStore(context: Context, name: String = "netpilot-examples.db") : SQLi
         db.execSQL("CREATE TABLE bills(id TEXT PRIMARY KEY,customer TEXT NOT NULL REFERENCES customers(id),cents INTEGER NOT NULL CHECK(cents>0),due TEXT NOT NULL)")
         db.execSQL("CREATE TABLE payments(id TEXT PRIMARY KEY,bill TEXT NOT NULL REFERENCES bills(id),cents INTEGER NOT NULL CHECK(cents>0),method TEXT NOT NULL,reference TEXT NOT NULL,at TEXT NOT NULL,reversed INTEGER NOT NULL DEFAULT 0)")
         db.execSQL("CREATE TABLE outbox(id TEXT PRIMARY KEY,kind TEXT NOT NULL,entity TEXT NOT NULL,at TEXT NOT NULL)")
-        db.execSQL("INSERT INTO plans VALUES('p1','Residencial','20 / 5 Mbps',150000,'residencial-20'),('p2','Negocio','50 / 10 Mbps',300000,'negocio-50')")
-        db.execSQL("INSERT INTO customers VALUES('c1','Ana Pérez','10.10.0.12','p1',0),('c2','Luis Díaz','10.10.0.18','p1',0),('c3','Taller Norte','10.10.0.25','p2',0)")
-        val due = LocalDate.now().minusDays(5).toString()
-        db.execSQL("INSERT INTO bills VALUES('b1','c1',150000,?),('b2','c2',150000,?),('b3','c3',300000,?)", arrayOf(due,due,due))
-        db.execSQL("INSERT INTO payments VALUES('sample-payment','b1',150000,'Efectivo','MUESTRA',?,0)", arrayOf(java.time.Instant.now().toString()))
+
     }
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) { error("Migración no definida") }
     fun read(): Ledger {
@@ -74,7 +70,7 @@ class LocalStore(context: Context, name: String = "netpilot-examples.db") : SQLi
             if(id==null) { v.put("id",key); db.insertOrThrow("customers",null,v) } else require(db.update("customers",v,"id=?",arrayOf(id))==1)
         }
     }
-    fun suspend(customer: Customer) = transaction("service.simulated",customer.id) { db -> db.execSQL("UPDATE customers SET suspended=? WHERE id=?", arrayOf(if(customer.suspended) 0 else 1, customer.id)) }
+    fun suspend(customer: Customer) = transaction("service.local_state",customer.id) { db -> db.execSQL("UPDATE customers SET suspended=? WHERE id=?", arrayOf(if(customer.suspended) 0 else 1, customer.id)) }
     fun charge(customer: String, cents: Long, due: String) {
         require(cents>0); LocalDate.parse(due)
         val id=UUID.randomUUID().toString()

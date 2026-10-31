@@ -5,35 +5,34 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import org.junit.Rule
 import org.junit.Test
 
-class DemoTest {
-    @get:Rule val ui = createAndroidComposeRule<MainActivity>()
+class NavigationTest {
+    @get:Rule val ui=createAndroidComposeRule<MainActivity>()
 
-    @Test fun navigationAndSafeActions() {
-        ui.waitUntil(10000) { ui.onAllNodesWithText("CENTRO DE OPERACIONES").fetchSemanticsNodes().isNotEmpty() }
-        ui.onNodeWithText("DATOS DE EJEMPLO / SIN CONEXIÓN", substring = true).assertExists()
+    @Test fun navigationAndNoFabricatedRouterData(){
+        ui.waitUntil(15000){
+            ui.onAllNodesWithText("Centro de operaciones").fetchSemanticsNodes().isNotEmpty()
+        }
+        ui.onNodeWithText("Conecta tu primer MikroTik").assertExists()
         ui.onNodeWithText("Clientes").performClick()
-        ui.onNodeWithText("Ana Pérez").assertExists()
-        ui.onAllNodesWithText("SUSPENDER…")[0].performScrollTo().performClick()
-        ui.onNodeWithText("CANCELAR").performScrollTo().performClick()
+        ui.onNodeWithText("Aún no hay clientes",substring=true).assertExists()
         ui.onNodeWithText("Planes").performClick()
-        ui.onNodeWithText("NUEVO PLAN").assertExists()
+        ui.onNodeWithText("Sin planes configurados").assertExists()
         ui.onNodeWithText("Pagos").performClick()
-        ui.onNodeWithText("GENERAR CARGO").assertExists()
-        ui.onNodeWithText("Tools").performClick()
-        ui.onNodeWithText("EXPORTAR DATOS LOCALES").assertExists()
-        ui.onNodeWithText("Panel").performClick()
-        ui.onNodeWithText("CENTRO DE OPERACIONES").assertExists()
+        ui.onNodeWithText("Sin cuentas pendientes").assertExists()
+        ui.onNodeWithText("Herramientas").performClick()
+        ui.onNodeWithText("CONEXIÓN MIKROTIK").assertExists()
     }
-
-    @Test fun brandingOnReentry() {
-        ui.waitUntil(10000) { ui.onAllNodesWithText("CENTRO DE OPERACIONES").fetchSemanticsNodes().isNotEmpty() }
-        ui.mainClock.autoAdvance = false
+    @Test fun jsusOrgBrandOnReentry(){
+        ui.waitUntil(15000){
+            ui.onAllNodesWithText("Centro de operaciones").fetchSemanticsNodes().isNotEmpty()
+        }
+        ui.mainClock.autoAdvance=false
         ui.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
         ui.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
         ui.mainClock.advanceTimeByFrame()
         ui.onNodeWithText("JsusOrg").assertExists()
-        ui.onNodeWithText("[ J / O ]").assertExists()
-        ui.mainClock.advanceTimeBy(1500)
-        ui.onNodeWithText("CENTRO DE OPERACIONES").assertExists()
+        ui.onNodeWithText("J/O").assertExists()
+        ui.mainClock.advanceTimeBy(1300)
+        ui.onNodeWithText("Centro de operaciones").assertExists()
     }
 }

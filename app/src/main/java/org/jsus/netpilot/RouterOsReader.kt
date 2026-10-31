@@ -25,12 +25,15 @@ internal object RouterOsReader {
         Query("Hotspot","/ip/hotspot/active/print","user,address,mac-address,uptime"),
         Query("Simple Queues","/queue/simple/print","name,target,max-limit,disabled"),
         Query("WireGuard","/interface/wireguard/print","name,listen-port,mtu,disabled,running"),
-        Query("Firewall Filter","/ip/firewall/filter/print","chain,action,disabled,comment,src-address,dst-address")
+        Query("Firewall Filter","/ip/firewall/filter/print","chain,action,disabled,comment,src-address,dst-address"),
+        Query("Logs","/log/print","time,topics,message"),
+        Query("Vecinos LAN","/ip/neighbor/print","identity,interface,address,mac-address,platform,version")
     )
     private class ApiError(message:String):Exception(message)
-    suspend fun query(host:String, user:String, password:String, fingerprint:String):RouterSnapshot = withContext(Dispatchers.IO) {
+    suspend fun query(host:String, user:String, password:String, fingerprint:String, port:Int=8729):RouterSnapshot = withContext(Dispatchers.IO) {
         val addr=host.trim()
         require(Regex("[A-Za-z0-9.-]{1,253}").matches(addr) && !addr.startsWith("-")) {"IP o hostname inválido"}
+        require(port in 1..65535){"Puerto fuera de rango"}
         require(user.isNotBlank() && password.isNotBlank()) {"Usuario y contraseña obligatorios"}
         val pin=fingerprint.filter{it.isLetterOrDigit()}.lowercase().ifBlank{null}
         require(pin==null || Regex("[0-9a-f]{64}").matches(pin)) {"Huella SHA-256 inválida"}
@@ -51,7 +54,7 @@ internal object RouterOsReader {
         val sections=mutableListOf<RouterSection>()
         (tls.socketFactory.createSocket() as SSLSocket).use {socket->
             socket.soTimeout=10000
-            socket.connect(InetSocketAddress(addr,8729),6000)
+            socket.connect(InetSocketAddress(addr,port),6000)
             socket.enabledProtocols=socket.supportedProtocols.filter{it=="TLSv1.2" || it=="TLSv1.3"}.toTypedArray()
             if(pin==null) socket.sslParameters=socket.sslParameters.apply{endpointIdentificationAlgorithm="HTTPS"}
             socket.startHandshake()
