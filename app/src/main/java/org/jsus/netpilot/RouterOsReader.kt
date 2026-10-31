@@ -44,6 +44,7 @@ internal object RouterOsReader {
                 override fun checkClientTrusted(chain:Array<X509Certificate>, authType:String) { throw java.security.cert.CertificateException("No se usa autenticación TLS cliente") }
                 override fun checkServerTrusted(chain:Array<X509Certificate>, authType:String) {
                     val cert=chain.firstOrNull() ?: throw java.security.cert.CertificateException("No hay certificado")
+                    cert.checkValidity()
                     val hash=MessageDigest.getInstance("SHA-256").digest(cert.encoded).joinToString(""){ "%02x".format(it.toInt() and 255)}
                     if(!MessageDigest.isEqual(hash.toByteArray(StandardCharsets.US_ASCII),pin.toByteArray(StandardCharsets.US_ASCII)))
                         throw java.security.cert.CertificateException("Huella de certificado no coincide")
@@ -73,6 +74,41 @@ internal object RouterOsReader {
         }
         RouterSnapshot(addr,java.time.Instant.now().toString(),sections)
     }
+
+    /** Obtain the *unverified* peer certificate fingerprint without ever sending credentials.
+     * A caller must show it and require explicit out-of-band verification before trusting it.
+     * The probe's trust manager aborts the handshake immediately after receiving the cert. */
+    suspend fun probeFingerprint(host:String,port:Int):String = withContext(Dispatchers.IO) {
+        val addr=host.trim()
+        require(Regex("[A-Za-z0-9.-]{1,253}").matches(addr) && !addr.startsWith("-")){"IP o hostname inválido"}
+        require(port in 1..65535){"Puerto fuera de rango"}
+        var peer:X509Certificate?=null
+        val manager=object:X509TrustManager {
+            override fun getAcceptedIssuers():Array<X509Certificate> = emptyArray()
+            override fun checkClientTrusted(chain:Array<X509Certificate>,authType:String){
+                throw java.security.cert.CertificateException("No se admiten certificados de cliente")
+            }
+            override fun checkServerTrusted(chain:Array<X509Certificate>,authType:String){
+                peer=chain.firstOrNull()
+                throw java.security.cert.CertificateException("Requiere aprobación del certificado")
+            }
+        }
+        val ssl=SSLContext.getInstance("TLS").apply {init(null,arrayOf<TrustManager>(manager),null)}
+        (ssl.socketFactory.createSocket() as SSLSocket).use {socket->
+            socket.soTimeout=10000
+            socket.connect(InetSocketAddress(addr,port),6000)
+            socket.enabledProtocols=socket.supportedProtocols.filter{it=="TLSv1.2" || it=="TLSv1.3"}.toTypedArray()
+            try{socket.startHandshake()}catch(_:SSLException){ /* Expected: manager always rejects */ }
+        }
+        val cert=peer ?: throw SSLHandshakeException("El router no presentó un certificado TLS")
+        cert.checkValidity()
+        MessageDigest.getInstance("SHA-256").digest(cert.encoded).joinToString(""){"%02X".format(it.toInt() and 255)}
+    }
+
+    /** Synthetic protocol tests; never opens a socket. */
+    internal fun readTestReplies(raw:ByteArray):List<Map<String,String>>=
+        receive(BufferedInputStream(ByteArrayInputStream(raw)),200)
+
     private fun send(out:BufferedOutputStream,words:List<String>){
         for(w in words){
             val data=w.toByteArray(StandardCharsets.UTF_8)
@@ -133,6 +169,7 @@ internal object RouterOsReader {
             }
             when(words.first()){
                 "!done" -> { if(failure!=null)throw ApiError(failure);return rows }
+                "!empty" -> Unit // RouterOS 7.18+ can return no records before !done
                 "!re" -> if(rows.size<limit)rows+=map
                 "!trap" -> failure=map["message"]?:"Comando no autorizado o función ausente"
                 "!fatal" -> throw ApiError(map["message"]?:"La conexión fue cerrada por RouterOS")
