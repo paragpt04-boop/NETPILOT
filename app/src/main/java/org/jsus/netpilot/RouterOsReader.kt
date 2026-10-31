@@ -116,6 +116,7 @@ internal object RouterOsReader {
     private fun receive(ins:BufferedInputStream, limit:Int):List<Map<String,String>>{
         val rows=mutableListOf<Map<String,String>>()
         var count=0
+        var failure:String?=null
         while(true){
             require(++count<=25000){"Demasiadas respuestas RouterOS"}
             val words=sentence(ins)
@@ -128,9 +129,10 @@ internal object RouterOsReader {
                 }
             }
             when(words.first()){
-                "!done" -> return rows
+                "!done" -> { if(failure!=null)throw ApiError(failure);return rows }
                 "!re" -> if(rows.size<limit)rows+=map
-                "!trap","!fatal" -> throw ApiError(map["message"]?:"Comando no autorizado o función ausente")
+                "!trap" -> failure=map["message"]?:"Comando no autorizado o función ausente"
+                "!fatal" -> throw ApiError(map["message"]?:"La conexión fue cerrada por RouterOS")
                 else -> error("Respuesta RouterOS no reconocida")
             }
         }
