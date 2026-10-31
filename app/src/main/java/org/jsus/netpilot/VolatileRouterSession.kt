@@ -26,20 +26,35 @@ class VolatileRouterSession {
     val host:String get()=runCatching{unseal()?.getOrNull(0)?:"—"}.getOrDefault("—")
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
 
-    suspend fun connect(address:String,port:Int,username:String,password:String,fingerprint:String){
+    /** Stage connection details only as AES-GCM ciphertext, before network I/O. */
+    fun stage(address:String,port:Int,username:String,password:String) {
         require(port in 1..65535){"Puerto TLS inválido"}
-        require(listOf(address,username,password,fingerprint).none{it.contains('\u0000')}){"Dato de conexión inválido"}
-        val token=++version
+        require(address.isNotBlank() && username.isNotBlank() && password.isNotBlank()){"Faltan datos de conexión"}
+        require(listOf(address,username,password).none{it.contains('\u0000')}){"Datos inválidos"}
+        version++
+        seal(listOf(address.trim(),port.toString(),username,password,""))
+        connected=false;loading=false;problem="";snapshot=null;traffic.clear();prior=null
+    }
+    /** On first contact try Android's CA verification. A self-signed cert needs manual approval. */
+    suspend fun connectStaged(fingerprint:String=""){
+        val p=unseal() ?: throw IllegalStateException("La sesión expiró. Introduce los datos nuevamente.")
+        require(p.size==5){"Datos de sesión incompletos"}
+        val token=version
         loading=true;problem=""
         try {
-            val fresh=RouterOsReader.query(address,username,password,fingerprint,port)
-            if(version==token) {
-                seal(listOf(address,port.toString(),username,password,fingerprint))
+            val fresh=RouterOsReader.query(p[0],p[2],p[3],fingerprint,p[1].toInt())
+            if(version==token){
+                seal(listOf(p[0],p[1],p[2],p[3],fingerprint))
                 snapshot=fresh;connected=true;record(fresh)
             }
         }catch(e:CancellationException){throw e}
         catch(e:Exception){if(version==token){problem=safeError(e);connected=false};throw e}
-        finally{loading=false}
+        finally{if(version==token)loading=false}
+    }
+    /** No credentials are transmitted during fingerprint inspection. */
+    suspend fun inspectCertificate():String{
+        val p=unseal() ?: throw IllegalStateException("La sesión expiró.")
+        return RouterOsReader.probeFingerprint(p[0],p[1].toInt())
     }
     suspend fun refresh(){
         if(!connected || loading)return
