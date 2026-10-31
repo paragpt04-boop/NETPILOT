@@ -99,7 +99,7 @@ import javax.net.ssl.SSLException
                         }
                     }catch(e:Exception){error=e.message?:"Datos de conexión inválidos"}
                 },!session.loading && address.isNotBlank() && username.isNotBlank()
-                    && password.isNotBlank() && port.toIntOrNull() in 1..65535)
+                    && password.isNotBlank() && (port.toIntOrNull()?.let{it in 1..65535}==true))
             }
         }
         if(!form && !session.connected && session.problem.isNotBlank() && pendingFingerprint==null)
