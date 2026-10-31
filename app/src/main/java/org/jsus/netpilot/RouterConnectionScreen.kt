@@ -40,10 +40,10 @@ import kotlinx.coroutines.launch
     var expanded by remember{mutableStateOf<String?>(null)}
     Label("MIKROTIK / LECTURA REAL",orange,20)
     Label("LAN · API-SSL puerto 8729 · TLS obligatorio · sin comandos de escritura",muted,11)
-    RouterField("IP o hostname del router",host){host=it}
-    RouterField("Usuario de lectura",user){user=it}
+    RouterField("IP o hostname del router",host,{host=it})
+    RouterField("Usuario de lectura",user,{user=it})
     RouterField("Contraseña (no se guarda)",password,{password=it},true)
-    RouterField("Huella SHA-256 de certificado (opcional)",fingerprint){fingerprint=it}
+    RouterField("Huella SHA-256 de certificado (opcional)",fingerprint,{fingerprint=it})
     Label("Sin huella: requiere certificado confiable y nombre/IP coincidente. Con huella: debes verificarla por otro medio antes de introducirla.",muted,11)
     if(working) Label("Consultando el router...",orange)
     if(problem.isNotBlank())Label(problem,orange)
